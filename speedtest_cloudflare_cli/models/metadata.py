@@ -1,5 +1,6 @@
 import datetime
 
+from typing import Union, Any
 from pydantic import BaseModel, Field, computed_field
 
 
@@ -9,7 +10,7 @@ class Metadata(BaseModel):
     http_protocol: str = Field(alias="httpProtocol")
     asn: int
     isp: str = Field(alias="asOrganization")
-    colo: str
+    colo: Union[str, dict[str, Any]]
     country: str
     city: str | None = Field(default="N/A")
     region: str | None = Field(default="N/A")

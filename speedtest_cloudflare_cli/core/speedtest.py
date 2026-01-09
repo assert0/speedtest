@@ -75,7 +75,7 @@ def _fallback_ping() -> float | str:
 
 class SpeedTest:
     def __init__(self, url: str, download_size: int, upload_size: int, attempts: int):
-        self.url = url
+        self.url = url.rstrip("/")
         self.download_size = download_size
         self.upload_size = upload_size
         self.attempts = attempts
