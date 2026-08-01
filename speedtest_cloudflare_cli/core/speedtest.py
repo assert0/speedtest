@@ -7,6 +7,7 @@ import subprocess
 import threading
 import time
 from collections.abc import Callable, Generator
+from urllib.parse import urljoin
 
 import httpx
 import ping3
@@ -113,13 +114,13 @@ class SpeedTest:
 
     def _init_connection(self) -> None:
         """Opens a connection to the server and keeps it alive for subsequent requests."""
-        client().get(f"{self.url}/__down", params={"bytes": 0})
+        client().get(urljoin(self.url, "__down"), params={"bytes": 0})
 
     def _download(
         self, progress: Progress | None = None, task: TaskID | None = None, deadline: float | None = None
     ) -> None:
         """Download data in streaming chunks to keep the HTTP connection alive."""
-        with client().stream("GET", f"{self.url}/__down", params={"bytes": self.download_size}) as response:
+        with client().stream("GET", urljoin(self.url, "__down"), params={"bytes": self.download_size}) as response:
             # Consume the body in chunks so the server keeps feeding data.
             for chunk in response.iter_bytes(chunk_size=CHUNK_SIZE):
                 if deadline is not None and time.perf_counter() > deadline:
@@ -165,7 +166,7 @@ class SpeedTest:
                 yield current_chunk
 
         # httpx will read the iterator lazily and stream the request body
-        with client().stream("POST", f"{self.url}/__up", data=data_stream()) as _response:
+        with client().stream("POST", urljoin(self.url, "__up"), data=data_stream()) as _response:
             # No need to consume the response body; the context manager ensures the
             # request completes and the connection is released.
             pass
@@ -198,7 +199,7 @@ class SpeedTest:
                             progress.update(task, description="Uploading... 🚀", advance=len(current_chunk))
                     yield current_chunk
 
-            with http_client.stream("POST", f"{self.url}/__up", data=data_stream()) as _response:
+            with http_client.stream("POST", urljoin(self.url, "__up"), data=data_stream()) as _response:
                 pass
         finally:
             http_client.close()
@@ -302,7 +303,7 @@ class SpeedTest:
 
     @property
     def metadata(self) -> metadata.Metadata:
-        return metadata.Metadata.model_validate(client().get(f"{self.url}/meta").json())
+        return metadata.Metadata.model_validate(client().get(urljoin(self.url, "meta")).json())
 
     def _run_probe_test(self, test_type: str, silent: bool = True) -> float | None:
         """
